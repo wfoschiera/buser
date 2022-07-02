@@ -199,14 +199,15 @@ Agora, se você ainda não possui um projeto django configurado, pelo menos apre
 >_Disclaimer:_ Vou apresentar o Dockerfile com duas configurações, que servirão para referência futura. A primeira, e principal, consiste no uso do pip para gerenciamento de dependências. No segundo, utilizamos o Poetry.
 
 Verificado o básicão, vamos começar a configuração pro Docker fazer a mágica no nosso projeto.
-Na raiz do projeto, criar um arquivo Dockerfile. Esse arquivo pode ser criado tanto clicando com Botão direito do mouse > criar arquivo ou no terminal:
+Na __raiz__ do projeto, criar um arquivo Dockerfile. Esse arquivo pode ser criado tanto clicando com Botão direito do mouse > criar arquivo ou no terminal:
 ```sh
 touch Dockerfile
 ```
 É assim mesmo, D maiúsculo e sem extensão.  
 O Dockerfile é uma receita para criação de uma nova imagem. Com a receita pronta, nós podemos criar (buildar) uma nova imagem.
-Aproveitando a analogia com comida, o Docker constrói o software em camada. Cada alteração num camada, só afeta essa camada e as camadas acima dela. Pensando numa lasanha, depois que você constrói a primeira camada da lasanha ela não será afetada ao montar a segunda, terceira ou quarta camadas. Agora, se você estiver com a sua lasanha pronta e resolver mudar o recheio da primeira camada, você vai precisar desmontar e montar todas as camadas acima pra poder remontar a primeira, sacou? Agora vamos falar de Docker novamente.
-Vamos começar nossa receita da lasanha aos poucos. Pra começar, vamos montar uma imagem só com python
+> Aproveitando a analogia com comida, o Docker constrói a imagem em camadas. Cada alteração numa camada, só afeta essa camada e as camadas acima dela. Pensando numa lasanha, depois que você constrói a primeira camada da lasanha ela não será afetada ao montar a segunda, terceira ou quarta camadas. Agora, se você estiver com a sua lasanha pronta e resolver mudar o recheio da primeira camada, você vai precisar desmontar e montar todas as camadas acima pra poder remontar a primeira, sacou? Agora vamos falar de Docker novamente.  
+
+Vamos começar nossa receita da lasanha aos poucos. Pra começar, vamos montar uma imagem Python.
 ```sh
 FROM python:3.8.10-slim
 ```
@@ -259,7 +260,7 @@ Depois de atualizar o Dockerfile, precisamos atualizar o build da nossa imagem. 
 ```sh
 docker build -t nome_que_eu_quiser .
 ```
-Dessa vez, perceba no log abaixo que o Docker se encarregou de não baixar novamente o Python (nossa primeira camada da lasanha), por que ele viu que não teve alterações.  
+Dessa vez, perceba no log abaixo que o Docker não baixou novamente a imagem Python, já que continua a mesma versão.
 ```sh
 Sending build context to Docker daemon  47.89MB
 Step 1/5 : FROM python:3.8.10-slim
@@ -279,8 +280,8 @@ Collecting sqlparse>=0.2.2
   Downloading sqlparse-0.4.2-py3-none-any.whl (42 kB)
      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42.3/42.3 KB 3.6 MB/s eta 0:00:00
 ```
-Agora, só pra reforçar. Vamos alterar a versão do python no nosso Dockerfile e atualizar nossa imagem pra ver o que o Docker fará.
-Altera apenas a primeira linha do seu Dockerfile para o seguinte:  
+Agora, só pra reforçar. Vamos alterar a versão do python no nosso Dockerfile e atualizar nossa imagem pra ver o que acontece.
+Altere apenas a primeira linha do seu Dockerfile para o seguinte:  
 ```sh
 FROM python:3.10.4-slim
 ```
@@ -300,13 +301,33 @@ Step 5/5 : COPY . /app
  ---> eb235c8c6aca
 Successfully built eb235c8c6aca
 ```
-Se for atento aos logs, você verá que ele mostra quando utilizou o cache anterior, veja por exemplo a nossa etapa 5 quando rodamos novamente o docker build:
+Agora, pra ver ele utilizando o cache, execute o build novamente. A saída será similar a essa:
+```sh
+Step 1/5 : FROM python:3.10.4-slim
+ ---> 56cb06bdaede
+Step 2/5 : WORKDIR /app
+ ---> Using cache
+ ---> 557df345ef49
+Step 3/5 : COPY requirements.txt ./
+ ---> Using cache
+ ---> 05ab2043d48c
+Step 4/5 : RUN pip install -r requirements.txt
+ ---> Using cache
+ ---> 1e4c803cf647
+Step 5/5 : COPY . /app
+ ---> Using cache
+ ---> 116415c65872
+Successfully built 116415c65872
+Successfully tagged curso_tony:latest
+```
+Se for atento aos logs, você verá que ele mostra quando utilizou o cache, veja por exemplo a nossa etapa 5 quando rodamos novamente o docker build:
 ```sh
 Step 5/5 : COPY . /app
  ---> Using cache # aqui ele deixa explícito que não precisamos rebuildar
  ---> 116415c65872
 ```
 Pronto! Já temos um Dockerfile funcional para rodar nossa aplicação. Vamos testá-lo?  
+
 #TODO
 - Terminar a Documentação desses passos:  
 1. Executar nosso container localmente, passando runserver como parâmetro.
